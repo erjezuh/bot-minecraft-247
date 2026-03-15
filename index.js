@@ -12,7 +12,7 @@ const botArgs = {
   host: 'node-fi-free-04.tickhosting.com',
  port: 43008,
   username: 'InmortalBot',
-  version: '1.20.1' 
+  version: '1.21.11' 
 };
 
 // 3. FUNCIÓN DE CONEXIÓN (Para que si muere, resucite)
