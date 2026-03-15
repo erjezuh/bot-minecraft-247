@@ -1,0 +1,12 @@
+{
+  "name": "bot-minecraft-247",
+  "version": "1.0.0",
+  "description": "Bot para mi server",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "mineflayer": "^4.20.0"
+  }
+}
