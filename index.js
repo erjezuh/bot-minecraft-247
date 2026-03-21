@@ -11,7 +11,7 @@ http.createServer((req, res) => {
 const botArgs = {
   host: 'node-fi-free-04.tickhosting.com',
  port: 43008,
-  username: 'InmortalBot',
+  username: 'BOTAFK',
   version: '1.21.11' 
 };
 
