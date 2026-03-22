@@ -9,8 +9,8 @@ http.createServer((req, res) => {
 
 // 2. LA CONFIGURACIÓN
 const botArgs = {
-  host: 'node-fi-free-04.tickhosting.com',
- port: 43008,
+  host: '191.96.231.6',
+ port: 14597,
   username: 'BOTAFK',
   version: '1.21.11' 
 };
