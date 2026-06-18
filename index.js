@@ -1,34 +1,22 @@
-const net = require('net');
+const mcping = require('mc-server-ping');
 
 const HOST = 'node-fi-free-03.tickhosting.com';
 const PORT = 42607;
 
-console.log(`[${new Date().toLocaleTimeString()}] Iniciando pulso de red para Cron-Job...`);
+console.log(`[${new Date().toLocaleTimeString()}] Enviando ping oficial de Minecraft para Cron-Job...`);
 
-// Creamos una conexión TCP pura al puerto del servidor
-const client = net.connect({ host: HOST, port: PORT }, () => {
-    console.log('¡Conexión TCP establecida con éxito! Actividad de red registrada.');
-    client.end(); // Cerramos la conexión de inmediato
-});
-
-// Si el servidor responde con éxito o rechaza, cerramos el proceso limpiamente
-client.on('end', () => {
-    console.log('Conexión cerrada de forma limpia.');
-    process.exit(0);
-});
-
-// Manejo de errores (por si está hibernando/apagado)
-client.on('error', (err) => {
-    if (err.code === 'ECONNREFUSED') {
-        console.log('El servidor está hibernando. El intento de conexión forzará su encendido.');
+mcping.ping(HOST, PORT, (err, res) => {
+    if (err) {
+        // Si da error de conexión rechazada, es que está apagado, pero el paquete ha "golpeado" el puerto
+        if (err.code === 'ECONNREFUSED') {
+            console.log('El servidor está hibernando. ¡Paquete de Minecraft enviado para forzar encendido!');
+        } else {
+            console.log(`Aviso de red: ${err.message}`);
+        }
     } else {
-        console.log(`Aviso de red: ${err.message}`);
+        console.log('¡Ping de Minecraft enviado con éxito! El servidor está online.');
     }
-    process.exit(0); // Forzamos la salida limpia para que Render y Cron-Job no den error
-});
-
-// Timeout de seguridad de 10 segundos por si se queda colgado
-setTimeout(() => {
-    console.log('Timeout: El servidor no ha respondido a tiempo, cerrando script.');
+    
+    // Cerramos el proceso inmediatamente para Cron-Job
     process.exit(0);
-}, 10000);
+}, 8000); // 8 segundos de timeout
