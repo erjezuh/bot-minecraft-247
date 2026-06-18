@@ -1,51 +1,41 @@
-const net = require('net');
+const mineflayer = require('mineflayer');
 
-const HOST = 'node-fi-free-03.tickhosting.com';
-const PORT = 42607;
+const config = {
+    host: 'node-fi-free-03.tickhosting.com', 
+    port: 42607,          
+    username: 'Despertador247',
+    version: '1.21.1'
+};
 
-console.log(`[${new Date().toLocaleTimeString()}] Enviando Handshake oficial de Minecraft...`);
+console.log(`[${new Date().toLocaleTimeString()}] Iniciando intento de login con Mineflayer...`);
 
-const client = new net.Socket();
+const bot = mineflayer.createBot(config);
 
-// Buffer con el paquete de Handshake + Request de estado oficial de Minecraft 1.21.1
-// Esto simula exactamente cuando el juego actualiza la lista de servidores
-const handshakePacket = Buffer.from([
-    0x0F, 0x00,             // Longitud del paquete y ID (0x00 para handshake)
-    0x04,                   // Versión del protocolo (767 para 1.21.1, abreviado en este buffer básico)
-    0x09, 0x6c, 0x6f, 0x63, 0x61, 0x6c, 0x68, 0x6f, 0x73, 0x74, // Host ficticio (localhost)
-    (PORT >> 8) & 0xFF, PORT & 0xFF, // Puerto separado en bytes
-    0x01,                   // Siguiente estado (1 para Status)
-    0x01, 0x00              // Paquete de Request de estado
-]);
+function terminar(mensaje) {
+    console.log(mensaje);
+    process.exit(0); // Cierra el script por completo para que Cron-Job no se sature
+}
 
-client.connect(PORT, HOST, () => {
-    console.log('Conectado al puerto. Enviando datos de Minecraft...');
-    client.write(handshakePacket);
+// Si el servidor está online, intentará entrar
+bot.on('login', () => {
+    terminar('¡Login iniciado con éxito! Servidor despierto.');
 });
 
-// En cuanto el servidor responda algo (o nos eche), cerramos
-client.on('data', (data) => {
-    console.log('¡Respuesta recibida del servidor! Paquete de Minecraft aceptado.');
-    client.destroy();
-    process.exit(0);
+// Si el servidor lo echa por culpa de los mods (que es lo normal)
+bot.on('kicked', (reason) => {
+    terminar('El servidor rechazó el login por mods, pero detectó al bot perfectamente.');
 });
 
-client.on('close', () => {
-    console.log('Conexión cerrada limpiamente.');
-    process.exit(0);
-});
-
-client.on('error', (err) => {
+// Si el servidor está totalmente apagado/hibernando
+bot.on('error', (err) => {
     if (err.code === 'ECONNREFUSED') {
-        console.log('El servidor está hibernando, pero el intento de handshake forzará el inicio.');
+        terminar('El servidor está en hibernación. ¡Intento de login enviado para forzar encendido!');
     } else {
-        console.log(`Aviso de red: ${err.message}`);
+        terminar(`Aviso de red: ${err.message}`);
     }
-    process.exit(0);
 });
 
-// Timeout de 7 segundos
+// Timeout de seguridad: si a los 15 segundos no ha respondido, cerramos
 setTimeout(() => {
-    console.log('Timeout: Paquete enviado, cerrando proceso.');
-    process.exit(0);
-}, 7000);
+    terminar('Timeout: El proceso ha terminado.');
+}, 15000);
