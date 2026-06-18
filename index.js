@@ -9,33 +9,42 @@ const config = {
 
 console.log(`[${new Date().toLocaleTimeString()}] Iniciando intento de login con Mineflayer...`);
 
-const bot = mineflayer.createBot(config);
+let bot = mineflayer.createBot(config);
 
-function terminar(mensaje) {
+function limpiarBot(mensaje) {
     console.log(mensaje);
-    process.exit(0); // Cierra el script por completo para que Cron-Job no se sature
+    if (bot) {
+        try {
+            bot.quit(); // Desconecta el bot de forma segura
+        } catch (e) {}
+        bot = null; // Liberamos la memoria
+    }
+    console.log('Script en espera del próximo toque de Cron-Job.');
+    // NO usamos process.exit(). El código se queda estático y Render no detecta error.
 }
 
-// Si el servidor está online, intentará entrar
+// Si el servidor está online
 bot.on('login', () => {
-    terminar('¡Login iniciado con éxito! Servidor despierto.');
+    limpiarBot('¡Login iniciado con éxito! Servidor despierto.');
 });
 
-// Si el servidor lo echa por culpa de los mods (que es lo normal)
+// Si el servidor lo echa por los mods
 bot.on('kicked', (reason) => {
-    terminar('El servidor rechazó el login por mods, pero detectó al bot perfectamente.');
+    limpiarBot('El servidor rechazó el login por mods, pero detectó al bot perfectamente.');
 });
 
-// Si el servidor está totalmente apagado/hibernando
+// Si el servidor está apagado o hibernando
 bot.on('error', (err) => {
     if (err.code === 'ECONNREFUSED') {
-        terminar('El servidor está en hibernación. ¡Intento de login enviado para forzar encendido!');
+        limpiarBot('El servidor está en hibernación. ¡Intento de login enviado para forzar encendido!');
     } else {
-        terminar(`Aviso de red: ${err.message}`);
+        limpiarBot(`Aviso de red: ${err.message}`);
     }
 });
 
-// Timeout de seguridad: si a los 15 segundos no ha respondido, cerramos
+// Timeout de seguridad por si se queda colgado
 setTimeout(() => {
-    terminar('Timeout: El proceso ha terminado.');
+    if (bot) {
+        limpiarBot('Timeout: El proceso de intento ha terminado.');
+    }
 }, 15000);
