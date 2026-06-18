@@ -1,8 +1,9 @@
 {
   "name": "tickhosting-keepalive-light",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "main": "index.js",
   "scripts": {
+    "preinstall": "rm -rf node_modules yarn.lock package-lock.json",
     "start": "node index.js"
   },
   "engines": {
