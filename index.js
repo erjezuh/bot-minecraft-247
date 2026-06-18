@@ -7,39 +7,37 @@ const config = {
     version: '1.21.1'
 };
 
-function crearBot() {
-    console.log(`[${new Date().toLocaleTimeString()}] Tocando la puerta del servidor para mantenerlo despierto...`);
+console.log(`[${new Date().toLocaleTimeString()}] Ejecutando toque de Cron-Job...`);
 
-    const bot = mineflayer.createBot(config);
+const bot = mineflayer.createBot(config);
 
-    // Si el servidor está online, intentará loguear
-    bot.on('login', () => {
-        console.log('¡Conexión establecida con éxito! Reiniciando el contador del hosting.');
-        // Nos desconectamos a los 10 segundos para no saturar
-        setTimeout(() => bot.quit(), 10000);
-    });
-
-    // Captura cuando el servidor lo echa (por culpa de los mods o por estar apagado)
-    bot.on('kicked', (reason) => {
-        console.log('El servidor ha rechazado el login completo (Normal en servers con mods o cargando).');
-    });
-
-    // Manejo de errores (Crucial para cuando el servidor está totalmente hibernando)
-    bot.on('error', (err) => {
-        if (err.code === 'ECONNREFUSED') {
-            console.log('El servidor está en hibernación profunda. ¡Petición de encendido automático enviada!');
-        } else {
-            console.log('Aviso de red:', err.message);
-        }
-    });
-
-    // Bucle infinito: en cuanto se cierra la conexión, espera 3 minutos y vuelve a empezar
-    bot.on('end', () => {
-        const tiempoEspera = 180000; // 3 minutos (el hosting hiberna a los 5)
-        console.log(`Ciclo completado. Próximo intento en 3 minutos...\n`);
-        setTimeout(crearBot, tiempoEspera);
-    });
+// Definimos una función para cerrar el script de forma limpia
+function terminarScript(mensaje) {
+    console.log(mensaje);
+    console.log('Cerrando conexión limpiamente para Cron-Job.');
+    process.exit(0); // Esto le dice a Render y a Cron-Job que todo ha terminado bien
 }
 
-// Arranca el bot por primera vez
-crearBot();
+// Si el servidor está online y acepta el inicio de conexión
+bot.on('login', () => {
+    terminarScript('¡Conexión establecida! Servidor despierto.');
+});
+
+// Si el servidor lo echa por los mods
+bot.on('kicked', (reason) => {
+    terminarScript('El servidor rechazó el login (normal por mods), pero detectó la actividad.');
+});
+
+// Si el servidor está hibernando (apagado)
+bot.on('error', (err) => {
+    if (err.code === 'ECONNREFUSED') {
+        terminarScript('El servidor estaba apagado. ¡Se ha forzado el encendido automático!');
+    } else {
+        terminarScript(`Aviso de red: ${err.message}`);
+    }
+});
+
+// Por seguridad, si a los 20 segundos no ha pasado nada, cerramos para no colgar a Cron-Job
+setTimeout(() => {
+    terminarScript('Timeout: El servidor ha tardado demasiado en responder, cerramos.');
+}, 20000);
