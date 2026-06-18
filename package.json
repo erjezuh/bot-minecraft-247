@@ -1,5 +1,5 @@
 {
-  "name": "tickhosting-keepalive-mineflayer",
+  "name": "tickhosting-keepalive",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
