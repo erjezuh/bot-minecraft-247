@@ -1,4 +1,4 @@
-const mineflayer = require('mineflayer');
+const mc = require('minecraft-protocol');
 
 const config = {
     host: 'node-fi-free-03.tickhosting.com', 
@@ -8,9 +8,9 @@ const config = {
 };
 
 function ejecutarBot() {
-    console.log(`[${new Date().toLocaleTimeString()}] Iniciando intento de login con Mineflayer...`);
+    console.log(`[${new Date().toLocaleTimeString()}] Enviando paquete de login ultra-ligero...`);
     
-    const bot = mineflayer.createBot(config);
+    const client = mc.createClient(config);
     let terminado = false;
 
     function finalizarCiclo(mensaje) {
@@ -19,27 +19,23 @@ function ejecutarBot() {
 
         console.log(mensaje);
         try {
-            bot.quit();
+            client.end();
         } catch (e) {}
 
-        // En lugar de cerrar el programa, programamos el siguiente intento en 15 segundos
-        const proximoInvento = 15000; 
-        console.log(`Esperando ${proximoInvento / 1000} segundos para el próximo intento...\n`);
-        setTimeout(ejecutarBot, proximoInvento);
+        const proximoIntento = 15000; 
+        console.log(`Esperando ${proximoIntento / 1000} segundos para el próximo intento...\n`);
+        setTimeout(ejecutarBot, proximoIntento);
     }
 
-    // Si el servidor está online
-    bot.on('login', () => {
-        finalizarCiclo('¡Login iniciado con éxito! Servidor despierto.');
+    client.on('success', () => {
+        finalizarCiclo('¡Paquete de login aceptado! Servidor despierto.');
     });
 
-    // Si el servidor lo echa por los mods
-    bot.on('kicked', (reason) => {
-        finalizarCiclo('El servidor rechazó el login por mods, pero detectó la actividad.');
+    client.on('compress', () => {
+        finalizarCiclo('¡Paquete de compresión recibido! El servidor está respondiendo.');
     });
 
-    // Si el servidor está apagado o hibernando
-    bot.on('error', (err) => {
+    client.on('error', (err) => {
         if (err.code === 'ECONNREFUSED') {
             finalizarCiclo('El servidor está en hibernación. ¡Intento enviado para forzar encendido!');
         } else {
@@ -47,11 +43,10 @@ function ejecutarBot() {
         }
     });
 
-    // Timeout de seguridad por si se queda colgado intentando conectar
+    // Timeout por intento
     setTimeout(() => {
-        finalizarCiclo('Timeout: El intento actual ha tardado demasiado.');
-    }, 12000);
+        finalizarCiclo('Timeout del intento actual.');
+    }, 10000);
 }
 
-// Arranca el bucle por primera vez
 ejecutarBot();
