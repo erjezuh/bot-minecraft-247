@@ -1,5 +1,5 @@
 {
-  "name": "tickhosting-keepalive-light",
+  "name": "tickhosting-keepalive-ping",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
@@ -8,5 +8,7 @@
   "engines": {
     "node": ">=18.0.0"
   },
-  "dependencies": {}
+  "dependencies": {
+    "mc-server-ping": "^1.1.1"
+  }
 }
