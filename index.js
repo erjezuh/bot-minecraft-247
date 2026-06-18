@@ -7,44 +7,51 @@ const config = {
     version: '1.21.1'
 };
 
-console.log(`[${new Date().toLocaleTimeString()}] Iniciando intento de login con Mineflayer...`);
+function ejecutarBot() {
+    console.log(`[${new Date().toLocaleTimeString()}] Iniciando intento de login con Mineflayer...`);
+    
+    const bot = mineflayer.createBot(config);
+    let terminado = false;
 
-let bot = mineflayer.createBot(config);
+    function finalizarCiclo(mensaje) {
+        if (terminado) return;
+        terminado = true;
 
-function limpiarBot(mensaje) {
-    console.log(mensaje);
-    if (bot) {
+        console.log(mensaje);
         try {
-            bot.quit(); // Desconecta el bot de forma segura
+            bot.quit();
         } catch (e) {}
-        bot = null; // Liberamos la memoria
+
+        // En lugar de cerrar el programa, programamos el siguiente intento en 15 segundos
+        const proximoInvento = 15000; 
+        console.log(`Esperando ${proximoInvento / 1000} segundos para el próximo intento...\n`);
+        setTimeout(ejecutarBot, proximoInvento);
     }
-    console.log('Script en espera del próximo toque de Cron-Job.');
-    // NO usamos process.exit(). El código se queda estático y Render no detecta error.
+
+    // Si el servidor está online
+    bot.on('login', () => {
+        finalizarCiclo('¡Login iniciado con éxito! Servidor despierto.');
+    });
+
+    // Si el servidor lo echa por los mods
+    bot.on('kicked', (reason) => {
+        finalizarCiclo('El servidor rechazó el login por mods, pero detectó la actividad.');
+    });
+
+    // Si el servidor está apagado o hibernando
+    bot.on('error', (err) => {
+        if (err.code === 'ECONNREFUSED') {
+            finalizarCiclo('El servidor está en hibernación. ¡Intento enviado para forzar encendido!');
+        } else {
+            finalizarCiclo(`Aviso de red: ${err.message}`);
+        }
+    });
+
+    // Timeout de seguridad por si se queda colgado intentando conectar
+    setTimeout(() => {
+        finalizarCiclo('Timeout: El intento actual ha tardado demasiado.');
+    }, 12000);
 }
 
-// Si el servidor está online
-bot.on('login', () => {
-    limpiarBot('¡Login iniciado con éxito! Servidor despierto.');
-});
-
-// Si el servidor lo echa por los mods
-bot.on('kicked', (reason) => {
-    limpiarBot('El servidor rechazó el login por mods, pero detectó al bot perfectamente.');
-});
-
-// Si el servidor está apagado o hibernando
-bot.on('error', (err) => {
-    if (err.code === 'ECONNREFUSED') {
-        limpiarBot('El servidor está en hibernación. ¡Intento de login enviado para forzar encendido!');
-    } else {
-        limpiarBot(`Aviso de red: ${err.message}`);
-    }
-});
-
-// Timeout de seguridad por si se queda colgado
-setTimeout(() => {
-    if (bot) {
-        limpiarBot('Timeout: El proceso de intento ha terminado.');
-    }
-}, 15000);
+// Arranca el bucle por primera vez
+ejecutarBot();
