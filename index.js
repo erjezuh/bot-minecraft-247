@@ -1,43 +1,34 @@
-const mineflayer = require('mineflayer');
+const net = require('net');
 
-const config = {
-    host: 'node-fi-free-03.tickhosting.com', 
-    port: 42607,          
-    username: 'Despertador247',
-    version: '1.21.1'
-};
+const HOST = 'node-fi-free-03.tickhosting.com';
+const PORT = 42607;
 
-console.log(`[${new Date().toLocaleTimeString()}] Ejecutando toque de Cron-Job...`);
+console.log(`[${new Date().toLocaleTimeString()}] Iniciando pulso de red para Cron-Job...`);
 
-const bot = mineflayer.createBot(config);
-
-// Definimos una función para cerrar el script de forma limpia
-function terminarScript(mensaje) {
-    console.log(mensaje);
-    console.log('Cerrando conexión limpiamente para Cron-Job.');
-    process.exit(0); // Esto le dice a Render y a Cron-Job que todo ha terminado bien
-}
-
-// Si el servidor está online y acepta el inicio de conexión
-bot.on('login', () => {
-    terminarScript('¡Conexión establecida! Servidor despierto.');
+// Creamos una conexión TCP pura al puerto del servidor
+const client = net.connect({ host: HOST, port: PORT }, () => {
+    console.log('¡Conexión TCP establecida con éxito! Actividad de red registrada.');
+    client.end(); // Cerramos la conexión de inmediato
 });
 
-// Si el servidor lo echa por los mods
-bot.on('kicked', (reason) => {
-    terminarScript('El servidor rechazó el login (normal por mods), pero detectó la actividad.');
+// Si el servidor responde con éxito o rechaza, cerramos el proceso limpiamente
+client.on('end', () => {
+    console.log('Conexión cerrada de forma limpia.');
+    process.exit(0);
 });
 
-// Si el servidor está hibernando (apagado)
-bot.on('error', (err) => {
+// Manejo de errores (por si está hibernando/apagado)
+client.on('error', (err) => {
     if (err.code === 'ECONNREFUSED') {
-        terminarScript('El servidor estaba apagado. ¡Se ha forzado el encendido automático!');
+        console.log('El servidor está hibernando. El intento de conexión forzará su encendido.');
     } else {
-        terminarScript(`Aviso de red: ${err.message}`);
+        console.log(`Aviso de red: ${err.message}`);
     }
+    process.exit(0); // Forzamos la salida limpia para que Render y Cron-Job no den error
 });
 
-// Por seguridad, si a los 20 segundos no ha pasado nada, cerramos para no colgar a Cron-Job
+// Timeout de seguridad de 10 segundos por si se queda colgado
 setTimeout(() => {
-    terminarScript('Timeout: El servidor ha tardado demasiado en responder, cerramos.');
-}, 20000);
+    console.log('Timeout: El servidor no ha respondido a tiempo, cerrando script.');
+    process.exit(0);
+}, 10000);
