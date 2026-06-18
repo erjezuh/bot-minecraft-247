@@ -1,43 +1,45 @@
-const bedrock = require('bedrock-protocol');
-const http = require('http');
+const mineflayer = require('mineflayer');
 
-// 1. SERVIDOR WEB FORZADO (Esto quita los errores amarillos de Render)
-const server = http.createServer((req, res) => {
-    res.writeHead(200, { 'Content-Type': 'text/plain' });
-    res.end('Bot Online');
-});
+const config = {
+    host: 'node-fi-free-03.tickhosting.com', 
+    port: 42607,          
+    username: 'Despertador247',
+    version: '1.21.1'
+};
 
-// Forzamos a que escuche en el puerto 10000 o el que Render asigne
-const PORT = process.env.PORT || 10000;
-server.listen(PORT, '0.0.0.0', () => {
-    console.log(`Servidor web detectado en puerto ${PORT}`);
-});
+function crearBot() {
+    console.log(`[${new Date().toLocaleTimeString()}] Tocando la puerta del servidor para mantenerlo despierto...`);
 
-// 2. FUNCIÓN DEL BOT
-function createBot() {
-    console.log('--- Intentando conectar a Minecraft ---');
-    
-    const client = bedrock.createClient({
-        host: '191.96.231.4',
-        port: 12026,
-        username: 'Bot_247',
-        offline: true,
-        version: '1.26.10',
-        skipPing: true
+    const bot = mineflayer.createBot(config);
+
+    // Si el servidor está online, intentará loguear
+    bot.on('login', () => {
+        console.log('¡Conexión establecida con éxito! Reiniciando el contador del hosting.');
+        // Nos desconectamos a los 10 segundos para no saturar
+        setTimeout(() => bot.quit(), 10000);
     });
 
-    client.on('join', () => {
-        console.log('¡CONECTADO! El bot ya está dentro.');
+    // Captura cuando el servidor lo echa (por culpa de los mods o por estar apagado)
+    bot.on('kicked', (reason) => {
+        console.log('El servidor ha rechazado el login completo (Normal en servers con mods o cargando).');
     });
 
-    client.on('error', (err) => {
-        console.log('Error de conexión:', err.message);
+    // Manejo de errores (Crucial para cuando el servidor está totalmente hibernando)
+    bot.on('error', (err) => {
+        if (err.code === 'ECONNREFUSED') {
+            console.log('El servidor está en hibernación profunda. ¡Petición de encendido automático enviada!');
+        } else {
+            console.log('Aviso de red:', err.message);
+        }
     });
 
-    client.on('close', () => {
-        console.log('Reconectando...');
-        setTimeout(createBot, 15000);
+    // Bucle infinito: en cuanto se cierra la conexión, espera 3 minutos y vuelve a empezar
+    bot.on('end', () => {
+        const tiempoEspera = 180000; // 3 minutos (el hosting hiberna a los 5)
+        console.log(`Ciclo completado. Próximo intento en 3 minutos...\n`);
+        setTimeout(crearBot, tiempoEspera);
     });
 }
 
-createBot();
+// Arranca el bot por primera vez
+crearBot();
