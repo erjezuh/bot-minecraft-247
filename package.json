@@ -1,5 +1,5 @@
 {
-  "name": "tickhosting-keepalive-native",
+  "name": "tickhosting-keepalive-mineflayer",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
@@ -8,5 +8,7 @@
   "engines": {
     "node": ">=18.0.0"
   },
-  "dependencies": {}
+  "dependencies": {
+    "mineflayer": "4.24.0"
+  }
 }
