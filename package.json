@@ -1,11 +1,9 @@
 {
-  "name": "tickhosting-keepalive",
+  "name": "tickhosting-keepalive-light",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
   },
-  "dependencies": {
-    "mineflayer": "^4.24.0"
-  }
+  "dependencies": {}
 }
