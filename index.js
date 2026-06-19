@@ -1,38 +1,71 @@
-const mc = require('minecraft-protocol');
+const express = require('express');
+const mineflayer = require('mineflayer');
 
-module.exports = async (req, res) => {
-    const config = {
-        host: 'node-fi-free-03.tickhosting.com',
-        port: 42607,
-        username: 'KeepAliveBot',
-        version: '1.21.1'
-    };
+const app = express();
 
-    try {
-        const client = mc.createClient(config);
-        
-        // El temporizador de seguridad original
-        const timer = setTimeout(() => {
-            client.end();
-            res.status(200).send('OK');
-        }, 5000);
+const HOST = 'node-fi-free-03.tickhosting.com';
+const PORT_MC = 42607;
+const VERSION = '1.21.1';
+const BOT_NAME = 'KeepAliveBot';
 
-        // Volvemos a escuchar el connect original que le gustaba a TickHosting
-        client.on('connect', () => {
-            clearTimeout(timer);
-            // Le damos un mini respiro antes de cerrar para que el hosting registre el login
-            setTimeout(() => {
-                client.end();
-                res.status(200).send('OK');
-            }, 1000);
-        });
+let bot = null;
+let reconnectTimeout = null;
 
-        client.on('error', (err) => {
-            clearTimeout(timer);
-            res.status(200).send('OK');
-        });
+// ===== EXPRESS SERVER (Render keep-alive) =====
+app.get('/', (req, res) => {
+  res.send('OK');
+});
 
-    } catch (error) {
-        res.status(200).send('OK');
-    }
-};
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Web server running on port ${PORT}`);
+});
+
+// ===== MINEFLAYER BOT =====
+function createBot() {
+  console.log('Iniciando bot...');
+
+  bot = mineflayer.createBot({
+    host: HOST,
+    port: PORT_MC,
+    username: BOT_NAME,
+    version: VERSION
+  });
+
+  bot.on('login', () => {
+    console.log('Bot conectado al servidor de Minecraft');
+  });
+
+  bot.on('spawn', () => {
+    console.log('Bot ha spawneado correctamente');
+  });
+
+  bot.on('kicked', (reason) => {
+    console.log('Bot expulsado:', reason);
+    scheduleReconnect();
+  });
+
+  bot.on('error', (err) => {
+    console.log('Error del bot:', err?.message || err);
+    scheduleReconnect();
+  });
+
+  bot.on('end', () => {
+    console.log('Conexión del bot cerrada');
+    scheduleReconnect();
+  });
+}
+
+// ===== RECONNECT LOGIC =====
+function scheduleReconnect() {
+  if (reconnectTimeout) return;
+
+  reconnectTimeout = setTimeout(() => {
+    reconnectTimeout = null;
+    console.log('Reconectando bot...');
+    createBot();
+  }, 5000);
+}
+
+// Start bot
+createBot();
