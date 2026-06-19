@@ -1,14 +1,29 @@
-// ... dentro del client.on('connect', ...)
-client.on('connect', () => {
-    clearTimeout(timer);
-    client.end();
-    // Cambia esto a solo esto:
-    res.status(200).send('OK'); 
-});
+const mc = require('minecraft-protocol');
 
-// ... dentro del client.on('error', ...)
-client.on('error', (err) => {
-    clearTimeout(timer);
-    // Cambia esto a solo esto:
-    res.status(200).send('OK'); 
-});
+module.exports = async (req, res) => {
+    const config = {
+        host: 'node-fi-free-03.tickhosting.com', 
+        port: 42607,          
+        username: 'KeepAliveBot',
+        version: '1.21.1'
+    };
+
+    try {
+        const client = mc.createClient(config);
+        const timer = setTimeout(() => client.end(), 5000);
+
+        client.on('connect', () => {
+            clearTimeout(timer);
+            client.end();
+            res.status(200).send('OK');
+        });
+
+        client.on('error', (err) => {
+            clearTimeout(timer);
+            res.status(200).send('OK');
+        });
+
+    } catch (error) {
+        res.status(200).send('OK');
+    }
+};
