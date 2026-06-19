@@ -3,8 +3,8 @@ const mineflayer = require('mineflayer');
 
 const app = express();
 
-const HOST = 'node-fi-free-03.tickhosting.com';
-const PORT_MC = 42607;
+const HOST = 'mango.fps.ms';
+const PORT_MC = 10563;
 const VERSION = '1.21.1';
 const BOT_NAME = 'KeepAliveBot';
 
