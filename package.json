@@ -1,7 +1,13 @@
 {
-  "name": "keepalive-tickhosting",
+  "name": "keepalive-minecraft-bot",
   "version": "1.0.0",
+  "description": "Bot para mantener activo servidor de Minecraft en TickHosting",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
   "dependencies": {
-    "minecraft-protocol": "^1.47.0"
+    "express": "^4.19.2",
+    "mineflayer": "^4.20.1"
   }
 }
