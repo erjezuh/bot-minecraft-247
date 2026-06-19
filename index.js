@@ -2,32 +2,31 @@ const mc = require('minecraft-protocol');
 
 module.exports = async (req, res) => {
     const config = {
-        host: 'node-fi-free-03.tickhosting.com', 
-        port: 42607,          
+        host: 'node-fi-free-03.tickhosting.com',
+        port: 42607,
         username: 'KeepAliveBot',
-        version: '1.21.1' // Asegúrate de que coincide con la versión del server
+        version: '1.21.1'
     };
 
     try {
-        // Creamos el cliente (esto inicia el proceso de login real)
         const client = mc.createClient(config);
         
-        // Le damos 7 segundos de margen para que complete la entrada
+        // El temporizador de seguridad original
         const timer = setTimeout(() => {
             client.end();
             res.status(200).send('OK');
-        }, 7000);
+        }, 5000);
 
-        // EVENTO CLAVE: Se activa cuando el bot ha entrado al mundo con éxito
-        client.on('login', () => {
+        // Volvemos a escuchar el connect original que le gustaba a TickHosting
+        client.on('connect', () => {
             clearTimeout(timer);
+            // Le damos un mini respiro antes de cerrar para que el hosting registre el login
             setTimeout(() => {
-                client.end(); // Se desconecta tras asegurar el despertar
+                client.end();
                 res.status(200).send('OK');
             }, 1000);
         });
 
-        // Si da error (por ejemplo, si el server está offline total), respondemos OK a Cron-Job
         client.on('error', (err) => {
             clearTimeout(timer);
             res.status(200).send('OK');
